@@ -1,15 +1,15 @@
 /**
  * Filter Bar
- * Priority, search, and sort controls for the kanban board
+ * Header controls for the kanban board: search input, priority filter
+ * buttons, and CSV export.
  */
 
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Search, X, Download } from "lucide-react";
+import { Download, Search, X } from "lucide-react";
 import { TASK_PRIORITY_CONFIG } from "@/types";
 
 interface FilterBarProps {
@@ -37,20 +37,21 @@ export default function FilterBar({
   };
 
   return (
-    <div className="flex items-center gap-3 border-b border-border px-6 py-2">
+    <div className="flex items-center gap-3 border-b border-border px-8 py-2.5">
       {/* Search */}
-      <div className="relative flex-1 max-w-xs">
+      <div className="relative w-72">
         <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search tasks..."
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
-          className="h-8 pl-8 text-sm"
+          className="h-8 rounded-lg border-[#333] pl-8 pr-8 text-sm"
         />
         {searchQuery && (
           <button
             onClick={() => handleSearch("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label="Clear search"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -59,44 +60,44 @@ export default function FilterBar({
 
       {/* Priority filter */}
       <div className="flex items-center gap-1">
-        <span className="text-xs text-muted-foreground mr-1">Priority:</span>
+        <span className="mr-1 text-sm text-muted-foreground">Priority</span>
         {(
-          Object.entries(TASK_PRIORITY_CONFIG) as [
-            string,
-            { label: string; color: string },
-          ][]
+          Object.entries(TASK_PRIORITY_CONFIG) as [string, { label: string }][]
         ).map(([key, config]) => (
-          <Badge
+          <button
             key={key}
-            variant={activePriority === key ? "default" : "outline"}
-            className="cursor-pointer text-xs transition-all"
-            style={
+            onClick={() => onPriorityFilter(activePriority === key ? null : key)}
+            aria-pressed={activePriority === key}
+            className={cn(
+              "rounded-lg px-2.5 py-1.5 text-sm transition-colors",
               activePriority === key
-                ? { backgroundColor: config.color, borderColor: config.color }
-                : { borderColor: config.color, color: config.color }
-            }
-            onClick={() =>
-              onPriorityFilter(activePriority === key ? null : key)
-            }
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground",
+            )}
           >
             {config.label}
-          </Badge>
+          </button>
         ))}
         {activePriority && (
           <button
             onClick={() => onPriorityFilter(null)}
-            className="ml-1 text-xs text-muted-foreground hover:text-foreground"
+            aria-label="Clear priority filter"
+            className="ml-0.5 text-muted-foreground hover:text-foreground"
           >
-            <X className="h-3 w-3" />
+            <X className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
 
       {/* Export */}
-      <Button variant="ghost" size="sm" className="h-8" onClick={handleExport}>
-        <Download className="mr-1 h-3.5 w-3.5" />
-        <span className="text-xs">CSV</span>
-      </Button>
+      <button
+        onClick={handleExport}
+        aria-label="Export tasks as CSV"
+        className="ml-auto flex h-8 items-center gap-1.5 rounded-lg border border-[#333] px-3 text-sm text-gray-300 transition-colors hover:bg-secondary"
+      >
+        <Download className="h-3.5 w-3.5" />
+        <span>CSV</span>
+      </button>
     </div>
   );
 }

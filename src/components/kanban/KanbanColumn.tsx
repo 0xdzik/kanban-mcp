@@ -1,7 +1,7 @@
 /**
  * Kanban Column
- * A droppable column that holds task cards
- * Displays column header with task count and supports adding new tasks
+ * Transparent lane on the dark canvas: status header with count,
+ * droppable card list, and an inline "Add New" action.
  */
 
 "use client";
@@ -11,9 +11,8 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import TaskCard from "./TaskCard";
 import type { TaskWithLabels } from "@/types";
 import { TASK_STATUS_CONFIG } from "@/types";
@@ -25,14 +24,6 @@ interface KanbanColumnProps {
   onEditTask: (task: TaskWithLabels) => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  backlog: "bg-zinc-500",
-  todo: "bg-blue-500",
-  in_progress: "bg-amber-500",
-  in_review: "bg-purple-500",
-  done: "bg-emerald-500",
-};
-
 export default function KanbanColumn({
   status,
   tasks,
@@ -43,45 +34,56 @@ export default function KanbanColumn({
   const config = TASK_STATUS_CONFIG[status];
 
   return (
-    <div
-      className={`flex w-72 shrink-0 flex-col rounded-lg border border-border/50 bg-muted/30 transition-colors ${
-        isOver ? "border-primary/50 bg-primary/5" : ""
-      }`}
-    >
-      <div className="flex items-center justify-between px-3 py-2.5">
+    <section className="flex w-[320px] flex-shrink-0 flex-col">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${STATUS_COLORS[status]}`} />
-          <h3 className="text-sm font-semibold">{config.label}</h3>
-          <span className="rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+          <h3 className="text-sm font-semibold text-foreground">
+            {config.label}
+          </h3>
+          <span className="tabular-readout text-xs font-medium text-muted-foreground">
             {tasks.length}
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
+        <button
           onClick={() => onAddTask(status)}
+          aria-label={`Add task to ${config.label}`}
+          className="flex size-6 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
         >
-          <Plus className="h-3.5 w-3.5" />
-        </Button>
+          <Plus className="size-4" />
+        </button>
       </div>
 
-      <ScrollArea className="flex-1 px-2 pb-2">
-        <div
-          ref={setNodeRef}
-          className="space-y-2 py-1"
-          style={{ minHeight: 40 }}
+      <div
+        ref={setNodeRef}
+        className={cn(
+          "kanban-scroll flex-1 space-y-3 overflow-y-auto overflow-x-hidden rounded-xl border border-transparent pr-1 pb-4 transition-colors",
+          isOver && "border-primary/30 bg-primary/5",
+        )}
+        style={{ minHeight: 80 }}
+      >
+        <SortableContext
+          items={tasks.map((t) => t.id)}
+          strategy={verticalListSortingStrategy}
         >
-          <SortableContext
-            items={tasks.map((t) => t.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {tasks.map((task) => (
-              <TaskCard key={task.id} task={task} onEdit={onEditTask} />
-            ))}
-          </SortableContext>
-        </div>
-      </ScrollArea>
-    </div>
+          {tasks.map((task) => (
+            <TaskCard key={task.id} task={task} onEdit={onEditTask} />
+          ))}
+        </SortableContext>
+
+        {tasks.length === 0 && (
+          <div className="flex h-20 items-center justify-center rounded-xl border border-dashed border-border/70 text-xs text-muted-foreground/70">
+            No tasks yet
+          </div>
+        )}
+
+        <button
+          onClick={() => onAddTask(status)}
+          className="flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Plus className="size-4" />
+          <span>Add New</span>
+        </button>
+      </div>
+    </section>
   );
 }

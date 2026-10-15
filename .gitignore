@@ -52,6 +52,9 @@ kanban.db-shm
 # mcp config (contains local paths)
 mcp-config.json
 
+# superdesign scratch (component/draft HTML exports)
+.superdesign/tmp/
+
 # ide
 .vscode/
 .idea/

@@ -16,7 +16,6 @@ import {
   useSensors,
   type DragStartEvent,
   type DragEndEvent,
-  type DragOverEvent,
 } from "@dnd-kit/core";
 import KanbanColumn from "./KanbanColumn";
 import TaskCard from "./TaskCard";
@@ -78,10 +77,6 @@ export default function KanbanBoard() {
     },
     [tasks],
   );
-
-  const handleDragOver = useCallback((_event: DragOverEvent) => {
-    // Visual feedback handled by KanbanColumn's isOver
-  }, []);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -165,7 +160,7 @@ export default function KanbanBoard() {
   }
 
   return (
-    <>
+    <div className="flex flex-1 flex-col overflow-hidden">
       <FilterBar
         onSearchChange={setSearchQuery}
         onPriorityFilter={setPriorityFilter}
@@ -176,25 +171,26 @@ export default function KanbanBoard() {
         sensors={sensors}
         collisionDetection={closestCorners}
         onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 gap-4 overflow-x-auto p-4">
-          {columns.map(({ status, tasks: columnTasks }) => (
-            <KanbanColumn
-              key={status}
-              status={status}
-              tasks={columnTasks}
-              onAddTask={handleAddTask}
-              onEditTask={setSelectedTask}
-            />
-          ))}
+        <div className="kanban-scroll flex-1 overflow-x-auto overflow-y-hidden p-8">
+          <div className="flex h-full gap-6">
+            {columns.map(({ status, tasks: columnTasks }) => (
+              <KanbanColumn
+                key={status}
+                status={status}
+                tasks={columnTasks}
+                onAddTask={handleAddTask}
+                onEditTask={setSelectedTask}
+              />
+            ))}
+          </div>
         </div>
 
         <DragOverlay>
           {activeTask && (
-            <div className="w-72">
-              <TaskCard task={activeTask} onEdit={() => {}} />
+            <div className="w-80">
+              <TaskCard task={activeTask} onEdit={() => {}} isOverlay />
             </div>
           )}
         </DragOverlay>
@@ -218,6 +214,6 @@ export default function KanbanBoard() {
         onDelete={handleDeleteTask}
         projectId={activeProjectId}
       />
-    </>
+    </div>
   );
 }
