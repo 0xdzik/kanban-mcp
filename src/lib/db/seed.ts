@@ -29,6 +29,7 @@ async function seed() {
   console.log("Clearing existing data...");
   db.delete(schema.activityLog).run();
   db.delete(schema.comments).run();
+  db.delete(schema.notes).run();
   db.delete(schema.taskLabels).run();
   db.delete(schema.labels).run();
   db.delete(schema.tasks).run();
@@ -68,7 +69,15 @@ async function seed() {
   }
 
   console.log("Creating tasks...");
-  const taskData = [
+  const taskData: {
+    projectId: string;
+    title: string;
+    status: schema.TaskStatus;
+    priority: schema.TaskPriority;
+    position: number;
+    createdAt: string;
+    labels: string[];
+  }[] = [
     // E-Commerce — Done
     { projectId: projects[0].id, title: "Setup Next.js project with Tailwind", status: "done", priority: "critical", position: 0, createdAt: daysAgo(14), labels: ["Frontend"] },
     { projectId: projects[0].id, title: "Design database schema", status: "done", priority: "critical", position: 1, createdAt: daysAgo(13), labels: ["Backend"] },
@@ -178,11 +187,59 @@ async function seed() {
     }).run();
   }
 
+  console.log("Adding notes...");
+  const noteData = [
+    {
+      projectId: projects[0].id,
+      title: "Architecture Overview",
+      content:
+        "## Stack\n\n- **Frontend:** Next.js 16 + Tailwind + shadcn/ui\n- **Backend:** Next.js API routes + Drizzle ORM\n- **DB:** SQLite (WAL mode)\n\n## Key Decisions\n\n1. Server-side rendering for product pages (SEO)\n2. Stripe in test mode until launch\n3. Cart state stored in Zustand, persisted to `localStorage`",
+      createdAt: daysAgo(12),
+    },
+    {
+      projectId: projects[0].id,
+      title: "Meeting Notes — Sprint 3",
+      content:
+        "- Payment integration must go live before **Nov 15**\n- Admin dashboard can ship without export feature\n- Need decision on inventory sync: webhook vs polling",
+      createdAt: daysAgo(6),
+    },
+    {
+      projectId: projects[1].id,
+      title: "Compliance Checklist",
+      content:
+        "## Banking Regulations\n\n- [x] Data encryption at rest (AES-256)\n- [x] Biometric login\n- [ ] Session timeout after 5 min idle\n- [ ] Audit trail for all transfers\n- [ ] Penetration test before release",
+      createdAt: daysAgo(9),
+    },
+    {
+      projectId: projects[2].id,
+      title: "Prompt Engineering Log",
+      content:
+        "## System Prompt v4\n\n> You are a support assistant for ACME. Answer concisely. If unsure, escalate to human.\n\n**Results:** 12% fewer escalations vs v3. Hallucination rate: ~2% on eval set.\n\n### TODO\n- Add grounding with RAG citations\n- Test multi-language responses",
+      createdAt: daysAgo(5),
+    },
+  ];
+
+  for (const n of noteData) {
+    const id = uuid();
+    db.insert(schema.notes).values({ id, ...n, updatedAt: n.createdAt }).run();
+
+    db.insert(schema.activityLog).values({
+      id: uuid(),
+      taskId: null,
+      projectId: n.projectId,
+      action: "note_created",
+      details: JSON.stringify({ title: n.title }),
+      actor: "mcp-agent",
+      createdAt: n.createdAt,
+    }).run();
+  }
+
   console.log("Seed complete!");
   console.log(`  Projects: ${projects.length}`);
   console.log(`  Tasks: ${taskData.length}`);
   console.log(`  Labels: ${labelDefs.length}`);
   console.log(`  Comments: ${commentData.length}`);
+  console.log(`  Notes: ${noteData.length}`);
 
   sqlite.close();
 }

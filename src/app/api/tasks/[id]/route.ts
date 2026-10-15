@@ -7,7 +7,7 @@
 
 import { db } from "@/lib/db";
 import { tasks, activityLog } from "@/lib/db/schema";
-import { eq, and, gt, lt, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { v4 as uuid } from "uuid";
 

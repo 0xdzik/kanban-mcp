@@ -6,6 +6,7 @@
  *  - list_projects, get_project, create_project, update_project, delete_project
  *  - list_tasks, get_task, create_task, update_task, delete_task, move_task
  *  - add_comment, search_tasks, get_dashboard_summary
+ *  - list_notes, get_note, create_note, update_note, delete_note
  *
  * Resources:
  *  - kanban://projects
@@ -510,6 +511,132 @@ server.tool(
     return {
       content: [
         { type: "text" as const, text: `Comment added to task ${taskId}` },
+      ],
+    };
+  }
+);
+
+// ─── NOTES TOOLS ──────────────────────────────────────────
+
+server.tool(
+  "list_notes",
+  "List all notes for a project",
+  { projectId: z.string().describe("The project ID") },
+  async ({ projectId }) => {
+    const allNotes = await db
+      .select({
+        id: schema.notes.id,
+        projectId: schema.notes.projectId,
+        title: schema.notes.title,
+        createdAt: schema.notes.createdAt,
+        updatedAt: schema.notes.updatedAt,
+      })
+      .from(schema.notes)
+      .where(eq(schema.notes.projectId, projectId))
+      .orderBy(desc(schema.notes.updatedAt));
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: allNotes.length > 0
+            ? JSON.stringify(allNotes, null, 2)
+            : `No notes found for project ${projectId}`,
+        },
+      ],
+    };
+  }
+);
+
+server.tool(
+  "get_note",
+  "Get a note's full content",
+  { noteId: z.string().describe("The note ID") },
+  async ({ noteId }) => {
+    const note = await db.query.notes.findFirst({
+      where: eq(schema.notes.id, noteId),
+    });
+
+    if (!note) {
+      return {
+        content: [{ type: "text" as const, text: "Note not found" }],
+        isError: true,
+      };
+    }
+
+    return {
+      content: [
+        { type: "text" as const, text: JSON.stringify(note, null, 2) },
+      ],
+    };
+  }
+);
+
+server.tool(
+  "create_note",
+  "Create a new markdown note in a project",
+  {
+    projectId: z.string().describe("The project ID"),
+    title: z.string().describe("Note title"),
+    content: z.string().optional().default("").describe("Note content in markdown"),
+  },
+  async ({ projectId, title, content }) => {
+    const now = new Date().toISOString();
+    const id = uuid();
+
+    await db.insert(schema.notes).values({
+      id,
+      projectId,
+      title: title || "Untitled",
+      content: content || "",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return {
+      content: [
+        { type: "text" as const, text: `Note "${title}" created with ID: ${id}` },
+      ],
+    };
+  }
+);
+
+server.tool(
+  "update_note",
+  "Update a note's title or content",
+  {
+    noteId: z.string().describe("The note ID"),
+    title: z.string().optional().describe("New title"),
+    content: z.string().optional().describe("New content (markdown)"),
+  },
+  async ({ noteId, title, content }) => {
+    const now = new Date().toISOString();
+    const updates: Record<string, unknown> = { updatedAt: now };
+    if (title !== undefined) updates.title = title;
+    if (content !== undefined) updates.content = content;
+
+    await db
+      .update(schema.notes)
+      .set(updates)
+      .where(eq(schema.notes.id, noteId));
+
+    return {
+      content: [
+        { type: "text" as const, text: `Note ${noteId} updated` },
+      ],
+    };
+  }
+);
+
+server.tool(
+  "delete_note",
+  "Delete a note",
+  { noteId: z.string().describe("The note ID") },
+  async ({ noteId }) => {
+    await db.delete(schema.notes).where(eq(schema.notes.id, noteId));
+    return {
+      content: [
+        { type: "text" as const, text: `Note ${noteId} deleted` },
       ],
     };
   }

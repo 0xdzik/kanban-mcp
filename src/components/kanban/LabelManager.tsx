@@ -5,16 +5,16 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Tag } from "@/components/ui/tag";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Tag, Plus, Trash2 } from "lucide-react";
+import { Tag as TagIcon, Plus, Trash2 } from "lucide-react";
 
 interface Label {
   id: string;
@@ -45,14 +45,14 @@ export default function LabelManager({ projectId }: LabelManagerProps) {
   const [newName, setNewName] = useState("");
   const [selectedColor, setSelectedColor] = useState(PRESET_COLORS[6]);
 
-  const fetchLabels = useCallback(async () => {
-    const res = await fetch(`/api/labels?projectId=${projectId}`);
-    if (res.ok) setLabels(await res.json());
-  }, [projectId]);
-
   useEffect(() => {
-    fetchLabels();
-  }, [fetchLabels]);
+    fetch(`/api/labels?projectId=${projectId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data)) setLabels(data);
+      })
+      .catch(() => {});
+  }, [projectId]);
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -66,19 +66,28 @@ export default function LabelManager({ projectId }: LabelManagerProps) {
       }),
     });
     setNewName("");
-    fetchLabels();
+    reloadLabels();
+  };
+
+  const reloadLabels = () => {
+    fetch(`/api/labels?projectId=${projectId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (Array.isArray(data)) setLabels(data);
+      })
+      .catch(() => {});
   };
 
   const handleDelete = async (labelId: string) => {
     await fetch(`/api/labels/${labelId}`, { method: "DELETE" });
-    fetchLabels();
+    reloadLabels();
   };
 
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8">
-          <Tag className="mr-1.5 h-3.5 w-3.5" />
+          <TagIcon className="mr-1.5 h-3.5 w-3.5" />
           Labels ({labels.length})
         </Button>
       </PopoverTrigger>
@@ -92,12 +101,7 @@ export default function LabelManager({ projectId }: LabelManagerProps) {
                 key={label.id}
                 className="flex items-center justify-between rounded-md px-2 py-1 hover:bg-muted/50"
               >
-                <Badge
-                  style={{ backgroundColor: label.color }}
-                  className="text-white text-xs"
-                >
-                  {label.name}
-                </Badge>
+                <Tag color={label.color}>{label.name}</Tag>
                 <button
                   onClick={() => handleDelete(label.id)}
                   className="text-muted-foreground hover:text-destructive transition-colors"

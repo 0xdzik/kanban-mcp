@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useKanbanStore } from "@/hooks/useKanbanStore";
 import { TASK_STATUS_CONFIG, TASK_PRIORITY_CONFIG } from "@/types";
+import { PageHeader } from "@/components/layout/PageHeader";
 import DonutChart from "@/components/charts/DonutChart";
 import MiniBarChart from "@/components/charts/MiniBarChart";
 
@@ -34,11 +35,11 @@ const ACTION_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  backlog: "#64748b",
-  todo: "#3b82f6",
-  in_progress: "#f59e0b",
-  in_review: "#8b5cf6",
-  done: "#22c55e",
+  backlog: TASK_STATUS_CONFIG.backlog.color,
+  todo: TASK_STATUS_CONFIG.todo.color,
+  in_progress: TASK_STATUS_CONFIG.in_progress.color,
+  in_review: TASK_STATUS_CONFIG.in_review.color,
+  done: TASK_STATUS_CONFIG.done.color,
 };
 
 interface AnalyticsData {
@@ -115,19 +116,28 @@ export default function DashboardView() {
     })) || [];
 
   return (
-    <div className="flex-1 space-y-6 overflow-y-auto p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Overview of all your projects and tasks
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="mr-1.5 h-3.5 w-3.5" />
-          Export CSV
-        </Button>
-      </div>
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <PageHeader
+        crumbs={[{ label: "Dashboard" }]}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="mr-1.5 h-3.5 w-3.5" />
+            Export CSV
+          </Button>
+        }
+        title={
+          <div>
+            <h1 className="text-xl font-extrabold tracking-tight">
+              Dashboard
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              Overview of all your projects and tasks
+            </p>
+          </div>
+        }
+      />
+
+      <div className="flex-1 space-y-6 overflow-y-auto p-6">
 
       {/* Summary cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -249,14 +259,16 @@ export default function DashboardView() {
                       </div>
                       <div className="flex h-2 rounded-full bg-muted overflow-hidden">
                         <div
-                          className="h-full bg-emerald-500 transition-all"
+                          className="h-full transition-all"
                           style={{
+                            backgroundColor: TASK_STATUS_CONFIG.done.color,
                             width: `${(project.done / Math.max(project.total, 1)) * 100}%`,
                           }}
                         />
                         <div
-                          className="h-full bg-amber-500 transition-all"
+                          className="h-full transition-all"
                           style={{
+                            backgroundColor: TASK_STATUS_CONFIG.in_progress.color,
                             width: `${(project.inProgress / Math.max(project.total, 1)) * 100}%`,
                           }}
                         />
@@ -342,6 +354,7 @@ export default function DashboardView() {
             </ScrollArea>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

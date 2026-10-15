@@ -5,7 +5,7 @@
 
 import { db } from "@/lib/db";
 import { projects, tasks, activityLog } from "@/lib/db/schema";
-import { count, eq, sql, desc } from "drizzle-orm";
+import { count, eq, desc } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import type { DashboardSummary } from "@/types";
 

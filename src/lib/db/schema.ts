@@ -75,6 +75,17 @@ export const comments = sqliteTable("comments", {
   updatedAt: text("updated_at").notNull(),
 });
 
+export const notes = sqliteTable("notes", {
+  id: text("id").primaryKey(),
+  projectId: text("project_id")
+    .notNull()
+    .references(() => projects.id, { onDelete: "cascade" }),
+  title: text("title").notNull().default("Untitled"),
+  content: text("content").default(""),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
 export const activityLog = sqliteTable("activity_log", {
   id: text("id").primaryKey(),
   taskId: text("task_id").references(() => tasks.id, { onDelete: "cascade" }),
@@ -91,6 +102,7 @@ export const activityLog = sqliteTable("activity_log", {
 export const projectsRelations = relations(projects, ({ many }) => ({
   tasks: many(tasks),
   labels: many(labels),
+  notes: many(notes),
   activities: many(activityLog),
 }));
 
@@ -136,6 +148,13 @@ export const commentsRelations = relations(comments, ({ one }) => ({
   }),
 }));
 
+export const notesRelations = relations(notes, ({ one }) => ({
+  project: one(projects, {
+    fields: [notes.projectId],
+    references: [projects.id],
+  }),
+}));
+
 export const activityLogRelations = relations(activityLog, ({ one }) => ({
   task: one(tasks, {
     fields: [activityLog.taskId],
@@ -157,6 +176,8 @@ export type NewLabel = typeof labels.$inferInsert;
 export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
 export type ActivityLog = typeof activityLog.$inferSelect;
+export type Note = typeof notes.$inferSelect;
+export type NewNote = typeof notes.$inferInsert;
 
 export type TaskStatus = Task["status"];
 export type TaskPriority = Task["priority"];

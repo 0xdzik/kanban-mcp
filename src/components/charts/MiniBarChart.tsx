@@ -14,7 +14,7 @@ interface BarChartProps {
 export default function MiniBarChart({
   data,
   height = 120,
-  color = "hsl(var(--primary))",
+  color = "#60a5fa",
 }: BarChartProps) {
   if (data.length === 0) {
     return (

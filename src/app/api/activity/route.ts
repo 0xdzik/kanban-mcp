@@ -15,29 +15,19 @@ export async function GET(request: Request) {
     const projectId = searchParams.get("projectId");
     const limit = parseInt(searchParams.get("limit") || "30");
 
-    let query = db
-      .select()
-      .from(activityLog)
-      .orderBy(desc(activityLog.createdAt))
-      .limit(limit);
-
+    let where = undefined;
     if (taskId) {
-      query = db
-        .select()
-        .from(activityLog)
-        .where(eq(activityLog.taskId, taskId))
-        .orderBy(desc(activityLog.createdAt))
-        .limit(limit);
+      where = eq(activityLog.taskId, taskId);
     } else if (projectId) {
-      query = db
-        .select()
-        .from(activityLog)
-        .where(eq(activityLog.projectId, projectId))
-        .orderBy(desc(activityLog.createdAt))
-        .limit(limit);
+      where = eq(activityLog.projectId, projectId);
     }
 
-    const activities = await query;
+    const activities = await db
+      .select()
+      .from(activityLog)
+      .where(where)
+      .orderBy(desc(activityLog.createdAt))
+      .limit(limit);
     return NextResponse.json(activities);
   } catch (error) {
     console.error("Failed to fetch activity:", error);

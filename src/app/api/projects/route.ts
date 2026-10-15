@@ -6,7 +6,7 @@
 
 import { db } from "@/lib/db";
 import { projects, tasks } from "@/lib/db/schema";
-import { eq, count, sql } from "drizzle-orm";
+import { eq, count } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { v4 as uuid } from "uuid";
 

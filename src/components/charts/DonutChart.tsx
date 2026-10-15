@@ -38,16 +38,21 @@ export default function DonutChart({
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
 
-  let cumulativeOffset = 0;
+  // Immutable cumulative offsets: acc[i] = end position of segment i
+  const cumulative = data.reduce<number[]>(
+    (acc, segment) => [
+      ...acc,
+      (acc[acc.length - 1] ?? 0) + (segment.value / total) * circumference,
+    ],
+    [],
+  );
 
   return (
     <div className="flex items-center gap-4">
       <svg width={size} height={size} className="flex-shrink-0">
         {data.map((segment, i) => {
-          const percentage = segment.value / total;
-          const dashLength = percentage * circumference;
-          const dashOffset = -cumulativeOffset;
-          cumulativeOffset += dashLength;
+          const dashLength = (segment.value / total) * circumference;
+          const dashOffset = -(cumulative[i] - dashLength);
 
           return (
             <circle
